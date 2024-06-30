@@ -1,6 +1,10 @@
+// ADD DEPENDENCY INJECTION
 var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+builder.Services.AddCarter();
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-app.MapGet("/", () => "Hello World!");
+// CONFIGURE HTTP REQUEST
+var app = builder.Build();
+app.MapCarter();
 
 app.Run();
