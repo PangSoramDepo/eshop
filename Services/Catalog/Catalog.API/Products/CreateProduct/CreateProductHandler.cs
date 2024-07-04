@@ -5,12 +5,12 @@ namespace Catalog.API.Products.CreateProduct
 {
     public record CreateProductCommand(string Name, List<string> Categories, string Description, string ImageFile, decimal Price) : ICommand<CreateProductResult>;
     public record CreateProductResult(Guid Id);
-    internal class CreateProductCommandHandler : ICommandHandler<CreateProductCommand, CreateProductResult>
+    internal class CreateProductHandler(IDocumentSession session) : ICommandHandler<CreateProductCommand, CreateProductResult>
     {
         public async Task<CreateProductResult> Handle(CreateProductCommand command, CancellationToken cancellationToken)
         {
             // CREATE PRODUCT ENTITY
-            Product prodcut = new Product
+            Product product = new Product
             {
                 Name = command.Name,
                 Categories = command.Categories,
@@ -20,9 +20,11 @@ namespace Catalog.API.Products.CreateProduct
             };
 
             // SAVE TO DB
+            session.Store(product);
+            await session.SaveChangesAsync();
 
             // RETURN RESULT
-            return new CreateProductResult(Guid.NewGuid());
+            return new CreateProductResult(product.Id);
         }
     }
 }
