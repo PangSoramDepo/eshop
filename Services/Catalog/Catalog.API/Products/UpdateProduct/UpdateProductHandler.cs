@@ -26,6 +26,9 @@ namespace Catalog.API.Products.UpdateProduct
             var product = getProductById.Product;
             product.Name = request.Name;
             product.Price = request.Price;
+            product.Categories = request.Categories;
+            product.Description = request.Description;
+            product.ImageFile = request.ImageFile;
             session.Update(product);
             await session.SaveChangesAsync(cancellationToken);
             return new UpdateProductResult(true);
