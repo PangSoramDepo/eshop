@@ -1,5 +1,7 @@
 // ADD DEPENDENCY INJECTION
 using BuildingBlocks.Exceptions.Handler;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var assembly = typeof(Program).Assembly;
 var builder = WebApplication.CreateBuilder(args);
@@ -15,11 +17,19 @@ builder.Services.AddMarten(opts =>
 }).UseLightweightSessions();
 builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("Database")!);
 
 
 // CONFIGURE HTTP REQUEST
 var app = builder.Build();
 app.MapCarter();
 app.UseExceptionHandler(options => { });
+app.UseHealthChecks("/health",
+    new HealthCheckOptions
+    {
+        ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+    }
+);
 
 app.Run();
