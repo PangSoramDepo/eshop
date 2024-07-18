@@ -1,4 +1,6 @@
-﻿namespace Basket.API.Basket.StoreBasket
+﻿using Discount.Grpc;
+
+namespace Basket.API.Basket.StoreBasket
 {
     public record StoreBasketCommand(ShoppingCart Cart) : ICommand<StoreBasketResult>;
     public record StoreBasketResult(string Username);
@@ -10,12 +12,23 @@
             RuleFor(x => x.Cart.Username).NotEmpty().WithMessage("UserName is required");
         }
     }
-    public class StoreBasketHandler(IBasketRepository repository) : ICommandHandler<StoreBasketCommand, StoreBasketResult>
+    public class StoreBasketHandler(IBasketRepository repository, DiscountProtoService.DiscountProtoServiceClient discountProto) : ICommandHandler<StoreBasketCommand, StoreBasketResult>
     {
         public async Task<StoreBasketResult> Handle(StoreBasketCommand command, CancellationToken cancellationToken)
         {
-            var result = await repository.StoreBasket(command.Cart, cancellationToken);
-            return new StoreBasketResult(result.Username);
+            await DeductDiscount(command.Cart, cancellationToken);
+            await repository.StoreBasket(command.Cart, cancellationToken);
+            return new StoreBasketResult(command.Cart.Username);
+        }
+
+        private async Task DeductDiscount(ShoppingCart cart, CancellationToken cancellationToken)
+        {
+            // COMMUNICATE WITH DISCOUNT.GRPC AND CALCULATE LASTEST PRICES OF PRODUCTS INTO SC
+            foreach (var item in cart.Items)
+            {
+                var coupon = await discountProto.GetDiscountAsync(new GetDiscountRequest { ProductName = item.ProductName }, cancellationToken: cancellationToken);
+                item.Price -= coupon.Amount;
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
 //CONFIG DEPENDENCY INJECTION
+using Discount.Grpc;
+
 var assembly = typeof(Program).Assembly;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCarter();
@@ -15,6 +17,12 @@ builder.Services.AddMarten(opts =>
 }).UseLightweightSessions();
 
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+
+//CONFIG GRPC
+builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(options =>
+{
+    options.Address = new Uri(builder.Configuration["GrpcSettings:DiscountUrl"]!);
+});
 
 //CROSS CUTTING CONCERN
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
