@@ -1,0 +1,1 @@
+Go to "Package Manager Console" and write "Add-Migration InitialCreate" for generate migration file
